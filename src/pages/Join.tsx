@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-// Import hashValue to hash the entered password before comparing with Supabase
 import { hashValue } from '../lib/crypto';
+import LogoMark from '../components/LogoMark';
 
 export default function Join() {
   const { roomId: paramRoomId } = useParams<{ roomId?: string }>();
@@ -14,9 +14,7 @@ export default function Join() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!localStorage.getItem('userId')) {
-      navigate('/');
-    }
+    if (!localStorage.getItem('userId')) navigate('/');
   }, [navigate]);
 
   const handleJoin = async () => {
@@ -35,7 +33,7 @@ export default function Join() {
         .single();
 
       if (fetchError || !room) {
-        setError('Room not found. Check the Room ID and try again.');
+        setError('Room not found. Check the room ID and try again.');
         setLoading(false);
         return;
       }
@@ -43,22 +41,20 @@ export default function Join() {
       // Hash what the user typed so we can compare it against the stored hash
       const hashedPassword = await hashValue(trimmedPass);
 
+      // Compare hashes — plaintext password never hits Supabase
       if (room.password !== hashedPassword) {
         setError('Incorrect password.');
         setLoading(false);
         return;
       }
 
-      // Store the ORIGINAL password for encryption key derivation — not the hash
-      sessionStorage.setItem('roomId', trimmedRoom);
-      sessionStorage.setItem('roomPassword', trimmedPass);
-
       if (room.member_count >= room.capacity) {
-        setError('Room is full (max 2 users).');
+        setError('Room is full.');
         setLoading(false);
         return;
       }
 
+      // Store the ORIGINAL password for encryption key derivation — not the hash
       sessionStorage.setItem('roomId', trimmedRoom);
       sessionStorage.setItem('roomPassword', trimmedPass);
       navigate('/chat');
@@ -71,13 +67,13 @@ export default function Join() {
   return (
     <div className="page">
       <div className="card">
-        <div className="brand">
-          <div className="brand-icon">🔐</div>
-          <div className="brand-name">Secure<span>Chat</span></div>
+        <div className="logo">
+          <LogoMark size={32} />
+          <div className="logo-name">Cipher<em>Chat</em></div>
         </div>
 
-        <h1>Join Room</h1>
-        <p className="subtitle">// enter room ID and shared password</p>
+        <h1>Join a room</h1>
+        <p className="sub">// enter the room ID and shared password</p>
 
         <div className="field">
           <label>Room ID</label>
@@ -90,7 +86,7 @@ export default function Join() {
         </div>
 
         <div className="field">
-          <label>Room Password</label>
+          <label>Room password</label>
           <input
             type="password"
             placeholder="Shared secret from room creator"
@@ -101,28 +97,24 @@ export default function Join() {
           />
         </div>
 
-        {error && <div className="error-msg">{error}</div>}
+        {error && <div className="error">{error}</div>}
 
         <button
-          className="btn-primary"
+          className="btn btn-primary"
           onClick={handleJoin}
           disabled={!roomId.trim() || !password.trim() || loading}
-          style={{ marginTop: 8 }}
+          style={{ marginTop: 6 }}
         >
-          {loading ? 'Checking…' : 'Join Room →'}
+          {loading ? 'Checking…' : 'Join room'}
         </button>
 
-        <button
-          className="btn-ghost"
-          style={{ width: '100%', padding: '11px', marginTop: 10 }}
-          onClick={() => navigate('/ask')}
-        >
-          ← Back
+        <button className="btn btn-secondary" onClick={() => navigate('/ask')}>
+          Back
         </button>
 
-        <div className="security-badge" style={{ marginTop: 16 }}>
-          <div className="dot" />
-          Password derives encryption key locally · Never transmitted
+        <div className="enc-bar">
+          <div className="status-dot" />
+          Password derives encryption key locally · never transmitted in plaintext
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import LogoMark from '../components/LogoMark';
 
 export default function Login() {
   const [name, setName] = useState('');
@@ -15,16 +16,16 @@ export default function Login() {
   return (
     <div className="page">
       <div className="card">
-        <div className="brand">
-          <div className="brand-icon">🔐</div>
-          <div className="brand-name">Secure<span>Chat</span></div>
+        <div className="logo">
+          <LogoMark size={32} />
+          <div className="logo-name">Cipher<em>Chat</em></div>
         </div>
 
-        <h1>Welcome</h1>
-        <p className="subtitle">// enter your display name to start</p>
+        <h1>Welcome back</h1>
+        <p className="sub">// set your display name to continue</p>
 
         <div className="field">
-          <label>Display Name</label>
+          <label>Display name</label>
           <input
             placeholder="e.g. alice"
             value={name}
@@ -35,16 +36,17 @@ export default function Login() {
         </div>
 
         <button
-          className="btn-primary"
+          className="btn btn-primary"
           onClick={handleLogin}
           disabled={!name.trim()}
+          style={{ marginTop: 4 }}
         >
-          Continue →
+          Continue
         </button>
 
-        <div className="security-badge">
-          <div className="dot" />
-          XSalsa20-Poly1305 end-to-end encryption · Zero server-side plaintext
+        <div className="enc-bar">
+          <div className="status-dot" />
+          XSalsa20-Poly1305 · SHA-256 key derivation · zero server-side plaintext
         </div>
       </div>
     </div>

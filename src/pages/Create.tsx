@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-// Import hashValue so we can hash the password before sending to Supabase
 import { hashValue } from '../lib/crypto';
+import LogoMark from '../components/LogoMark';
 
 export default function Create() {
   const [roomId, setRoomId] = useState('');
@@ -21,7 +21,6 @@ export default function Create() {
     setError('');
 
     try {
-      // Check if room already exists
       const { data: existing } = await supabase
         .from('rooms')
         .select('id')
@@ -37,15 +36,9 @@ export default function Create() {
       // Hash the password before storing — Supabase never sees the plaintext
       const hashedPassword = await hashValue(trimmedPass);
 
-      // Create room
       const { error: insertError } = await supabase
         .from('rooms')
         .insert([{ room_id: trimmedRoom, password: hashedPassword, capacity }]);
-
-      // Store the ORIGINAL password in sessionStorage — needed to derive the
-      // encryption key for messages. This never leaves the browser.
-      sessionStorage.setItem('roomId', trimmedRoom);
-      sessionStorage.setItem('roomPassword', trimmedPass);
 
       if (insertError) {
         setError('Failed to create room: ' + insertError.message);
@@ -53,12 +46,12 @@ export default function Create() {
         return;
       }
 
-      // Save to session and navigate to chat
+      // Store the ORIGINAL password in sessionStorage for encryption key derivation
       sessionStorage.setItem('roomId', trimmedRoom);
       sessionStorage.setItem('roomPassword', trimmedPass);
       navigate('/chat');
-    } catch (err) {
-      setError('Something went wrong. Check Supabase configuration.');
+    } catch {
+      setError('Something went wrong. Check your Supabase configuration.');
       setLoading(false);
     }
   };
@@ -66,13 +59,13 @@ export default function Create() {
   return (
     <div className="page">
       <div className="card">
-        <div className="brand">
-          <div className="brand-icon">🔐</div>
-          <div className="brand-name">Secure<span>Chat</span></div>
+        <div className="logo">
+          <LogoMark size={32} />
+          <div className="logo-name">Cipher<em>Chat</em></div>
         </div>
 
-        <h1>Create Room</h1>
-        <p className="subtitle">// share room ID + password with your contact</p>
+        <h1>Create a room</h1>
+        <p className="sub">// share the room ID + password with your contact</p>
 
         <div className="field">
           <label>Room ID</label>
@@ -85,63 +78,44 @@ export default function Create() {
         </div>
 
         <div className="field">
-          <label>Room Password</label>
+          <label>Room password</label>
           <input
             type="password"
-            placeholder="Used to derive the encryption key"
+            placeholder="Shared secret — used to derive encryption key"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); }}
           />
         </div>
 
         <div className="field">
-          <label>Max Users</label>
-          <select
-            value={capacity}
-            onChange={(e) => setCapacity(Number(e.target.value))}
-            style={{
-              width: '100%',
-              background: 'var(--surface2)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              color: 'var(--text)',
-              fontSize: 15,
-              fontFamily: 'var(--mono)',
-              padding: '12px 14px',
-              outline: 'none',
-              marginBottom: 16,
-              cursor: 'pointer',
-            }}
-          >
-            {[2,3,4,5,6,8,10].map(n => (
-              <option key={n} value={n}>{n} users</option>
-            ))}
-          </select>
+          <label>Max users</label>
+          <div className="select-wrap">
+            <select value={capacity} onChange={(e) => setCapacity(Number(e.target.value))}>
+              {[2,3,4,5,6,8,10].map(n => (
+                <option key={n} value={n}>{n} users</option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {error && <div className="error-msg">{error}</div>}
+        {error && <div className="error">{error}</div>}
 
         <button
-          className="btn-primary"
+          className="btn btn-primary"
           onClick={handleCreate}
           disabled={!roomId.trim() || !password.trim() || loading}
-          style={{ marginTop: 8 }}
+          style={{ marginTop: 6 }}
         >
-          {loading ? 'Creating…' : 'Create & Enter →'}
+          {loading ? 'Creating…' : 'Create & enter'}
         </button>
 
-        <button
-          className="btn-ghost"
-          style={{ width: '100%', padding: '11px', marginTop: 10 }}
-          onClick={() => navigate('/ask')}
-        >
-          ← Back
+        <button className="btn btn-secondary" onClick={() => navigate('/ask')}>
+          Back
         </button>
 
-        <div className="security-badge" style={{ marginTop: 16 }}>
-          <div className="dot" />
-          Password never sent to server · Used only for key derivation
+        <div className="enc-bar">
+          <div className="status-dot" />
+          Password hashed before leaving your browser · never stored in plaintext
         </div>
       </div>
     </div>

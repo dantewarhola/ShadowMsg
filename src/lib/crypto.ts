@@ -45,7 +45,6 @@ export function decryptMessage(
   return encodeUTF8(msg);
 }
 
-
 /**
  * Hashes a string using SHA-256 and returns it as a hex string.
  * Used to store passwords in Supabase without revealing the plaintext.

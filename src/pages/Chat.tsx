@@ -2,106 +2,75 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { deriveKeyFromPassword, encryptMessage, decryptMessage } from '../lib/crypto';
+import LogoMark from '../components/LogoMark';
 
 interface ChatMessage {
   id: string;
-  type: 'own' | 'other' | 'system';
+  type: 'own' | 'other' | 'sys';
   sender: string;
   text: string;
   time: string;
 }
 
-function now() {
+function ts() {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 export default function Chat() {
   const navigate = useNavigate();
-  const roomId = sessionStorage.getItem('roomId') || '';
+  const roomId   = sessionStorage.getItem('roomId') || '';
   const password = sessionStorage.getItem('roomPassword') || '';
-  const userId = localStorage.getItem('userId') || 'anonymous';
+  const userId   = localStorage.getItem('userId') || 'anonymous';
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [key, setKey] = useState<Uint8Array | null>(null);
+  const [messages, setMessages]     = useState<ChatMessage[]>([]);
+  const [input, setInput]           = useState('');
+  const [key, setKey]               = useState<Uint8Array | null>(null);
   const [memberCount, setMemberCount] = useState(1);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const bottomRef  = useRef<HTMLDivElement>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  // Redirect if no session
   useEffect(() => {
-    if (!roomId || !password) {
-      navigate('/');
-    }
+    if (!roomId || !password) navigate('/');
   }, [roomId, password, navigate]);
 
-  // Derive encryption key from password
   useEffect(() => {
     if (!password) return;
     deriveKeyFromPassword(password).then(setKey);
   }, [password]);
 
-  // Add presence + realtime messaging via Supabase
   useEffect(() => {
     if (!key || !roomId) return;
 
-    // Announce join
-    const addSystemMsg = (text: string) => {
-      setMessages(prev => [...prev, {
-        id: crypto.randomUUID(),
-        type: 'system',
-        sender: 'system',
-        text,
-        time: now(),
-      }]);
-    };
+    const addSys = (text: string) =>
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), type: 'sys', sender: 'sys', text, time: ts() }]);
 
-    addSystemMsg('🔒 End-to-end encrypted channel established.');
+    addSys('🔒 End-to-end encrypted session started');
 
     const channel = supabase.channel(`room:${roomId}`, {
       config: { presence: { key: userId } }
     });
-
     channelRef.current = channel;
 
-    // Listen for encrypted messages broadcast
-    channel.on('broadcast', { event: 'encrypted_message' }, ({ payload }) => {
-      if (payload.sender === userId) return; // already shown locally
+    channel.on('broadcast', { event: 'msg' }, ({ payload }) => {
+      if (payload.sender === userId) return;
       try {
         const text = decryptMessage(payload.cipher, payload.nonce, key);
-        setMessages(prev => [...prev, {
-          id: crypto.randomUUID(),
-          type: 'other',
-          sender: payload.sender,
-          text,
-          time: now(),
-        }]);
+        setMessages(prev => [...prev, { id: crypto.randomUUID(), type: 'other', sender: payload.sender, text, time: ts() }]);
       } catch {
-        setMessages(prev => [...prev, {
-          id: crypto.randomUUID(),
-          type: 'other',
-          sender: payload.sender,
-          text: '[Decryption failed — wrong password?]',
-          time: now(),
-        }]);
+        setMessages(prev => [...prev, { id: crypto.randomUUID(), type: 'other', sender: payload.sender, text: '[decryption failed]', time: ts() }]);
       }
     });
 
-    // Presence tracking
     channel.on('presence', { event: 'sync' }, () => {
-      const state = channel.presenceState();
-      const count = Object.keys(state).length;
-      setMemberCount(count);
+      setMemberCount(Object.keys(channel.presenceState()).length);
     });
 
-    channel.on('presence', { event: 'join' }, ({ key: joinedKey }) => {
-      if (joinedKey !== userId) {
-        addSystemMsg(`${joinedKey} joined the room.`);
-      }
+    channel.on('presence', { event: 'join' }, ({ key: k }) => {
+      if (k !== userId) addSys(`${k} joined`);
     });
 
-    channel.on('presence', { event: 'leave' }, ({ key: leftKey }) => {
-      addSystemMsg(`${leftKey} left the room.`);
+    channel.on('presence', { event: 'leave' }, ({ key: k }) => {
+      addSys(`${k} left`);
     });
 
     channel.subscribe(async (status) => {
@@ -111,21 +80,12 @@ export default function Chat() {
       }
     });
 
-    // Also decrement when tab/browser is closed
-    const handleUnload = () => {
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/decrement_member_count`;
-      navigator.sendBeacon(url, new Blob([JSON.stringify({ p_room_id: roomId })], { type: 'application/json' }));
-    };
-    window.addEventListener('beforeunload', handleUnload);
-
     return () => {
-      window.removeEventListener('beforeunload', handleUnload);
       supabase.rpc('decrement_member_count', { p_room_id: roomId });
       supabase.removeChannel(channel);
     };
   }, [key, roomId, userId]);
 
-  // Auto-scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -134,24 +94,9 @@ export default function Chat() {
     if (!key || !input.trim() || !channelRef.current) return;
     const text = input.trim();
     setInput('');
-
     const { nonce, cipher } = encryptMessage(text, key);
-
-    // Show locally immediately
-    setMessages(prev => [...prev, {
-      id: crypto.randomUUID(),
-      type: 'own',
-      sender: userId,
-      text,
-      time: now(),
-    }]);
-
-    // Broadcast encrypted payload (no plaintext hits the server)
-    channelRef.current.send({
-      type: 'broadcast',
-      event: 'encrypted_message',
-      payload: { sender: userId, nonce, cipher },
-    });
+    setMessages(prev => [...prev, { id: crypto.randomUUID(), type: 'own', sender: userId, text, time: ts() }]);
+    channelRef.current.send({ type: 'broadcast', event: 'msg', payload: { sender: userId, nonce, cipher } });
   }, [key, input, userId]);
 
   const handleLeave = async () => {
@@ -166,64 +111,57 @@ export default function Chat() {
   };
 
   return (
-    <div className="chat-layout">
-      {/* Header */}
-      <div className="chat-header">
-        <div className="chat-header-left">
-          <div className="online-indicator" />
-          <div className="chat-header-info">
-            <h3># {roomId}</h3>
-            <p>{memberCount} connected · You: {userId}</p>
+    <div className="chat">
+      <nav className="chat-nav">
+        <div className="chat-nav-l">
+          <div className="online-dot" />
+          <LogoMark size={24} />
+          <div>
+            <div className="chat-room">#{roomId}</div>
+            <div className="chat-meta">{memberCount} connected · you: {userId}</div>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span className="tag">E2EE</span>
-          <button className="btn-danger" onClick={handleLeave}>Leave</button>
+        <div className="chat-nav-r">
+          <span className="badge"><span className="status-dot" />E2EE</span>
+          <button className="btn-danger-sm" onClick={handleLeave}>Leave</button>
         </div>
-      </div>
+      </nav>
 
-      {/* Messages */}
       <div className="chat-messages">
         {messages.length === 0 && (
-          <div style={{ color: 'var(--text-dim)', fontFamily: 'var(--mono)', fontSize: 13, textAlign: 'center', marginTop: 40 }}>
-            Waiting for messages… Share the Room ID and password with your contact.
+          <div style={{ color: 'var(--text2)', fontFamily: 'var(--mono)', fontSize: 12, textAlign: 'center', marginTop: 48 }}>
+            Waiting for messages · share the room ID and password with your contact
           </div>
         )}
         {messages.map((m) => (
           <div key={m.id} className={`msg ${m.type}`}>
-            {m.type !== 'system' && (
-              <div className="msg-sender">{m.type === 'own' ? 'You' : m.sender}</div>
+            {m.type !== 'sys' && (
+              <div className="msg-label">{m.type === 'own' ? 'you' : m.sender}</div>
             )}
             <div className="msg-bubble">{m.text}</div>
-            {m.type !== 'system' && (
-              <div className="msg-time">{m.time}</div>
-            )}
+            {m.type !== 'sys' && <div className="msg-time">{m.time}</div>}
           </div>
         ))}
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div className="chat-input-area">
+      <div className="chat-input-bar">
         <input
-          placeholder={key ? 'Type a message… (Enter to send)' : 'Deriving encryption key…'}
+          placeholder={key ? 'Type a message…' : 'Deriving key…'}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
           disabled={!key}
           autoFocus
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+          }}
         />
         <button
-          className="send-btn"
+          className="btn-send"
           onClick={handleSend}
           disabled={!key || !input.trim()}
         >
-          Send →
+          Send
         </button>
       </div>
     </div>
