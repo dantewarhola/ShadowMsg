@@ -361,10 +361,8 @@ export default function Chat() {
   };
 
   const forceRemove = async (uid: string) => {
-    // Broadcast kick event — the kicked user's client listens for this and leaves
+    // Broadcast kick — the kicked client will call leave_room itself when it receives this
     channelRef.current?.send({ type: 'broadcast', event: 'kicked', payload: { target: uid } });
-    // Also clean up the DB in case their client doesn't respond
-    await supabase.rpc('leave_room', { p_room_id: roomId, p_user_id: uid });
   };
 
   const leave = async () => {
