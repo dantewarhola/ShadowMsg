@@ -1,12 +1,11 @@
-export default function Logo({ size = 28 }: { size?: number }) {
+export default function Logo({ size = 26 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="14,1 25,7.5 25,20.5 14,27 3,20.5 3,7.5" fill="none" stroke="#38bdf8" strokeWidth="1"/>
-      <polygon points="14,5 22,9.5 22,18.5 14,23 6,18.5 6,9.5" fill="rgba(56,189,248,0.06)" stroke="rgba(56,189,248,0.3)" strokeWidth="0.5"/>
-      <path d="M11 13.5V12C11 10.34 12.34 9 14 9C15.66 9 17 10.34 17 12V13.5" stroke="#38bdf8" strokeWidth="1.2" strokeLinecap="round"/>
-      <rect x="10.5" y="13.5" width="7" height="5" rx="1" fill="#38bdf8" opacity="0.9"/>
-      <circle cx="14" cy="15.5" r="0.9" fill="#04060a"/>
-      <rect x="13.5" y="16.2" width="1" height="1.3" rx="0.5" fill="#04060a"/>
+    <svg width={size} height={size} viewBox="0 0 26 26" fill="none">
+      <polygon points="13,1 23,7 23,19 13,25 3,19 3,7" stroke="#00ff41" strokeWidth="1" fill="rgba(0,255,65,0.04)" />
+      <path d="M10 13V11.5C10 9.57 11.57 8 13.5 8C15.43 8 17 9.57 17 11.5V13" stroke="#00ff41" strokeWidth="1.2" strokeLinecap="round" />
+      <rect x="9.5" y="13" width="8" height="5.5" rx="1.2" fill="#00ff41" />
+      <circle cx="13.5" cy="15" r="1" fill="#000" />
+      <rect x="13" y="15.8" width="1" height="1.6" rx="0.5" fill="#000" />
     </svg>
   );
 }
