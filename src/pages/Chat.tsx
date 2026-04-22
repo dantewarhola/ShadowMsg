@@ -9,9 +9,8 @@ interface Msg { id: string; type: 'own' | 'other' | 'sys'; sender: string; text:
 
 const ts = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-// Heartbeat interval in ms — if a user misses 3 beats they're considered gone
-const HEARTBEAT_INTERVAL = 8000;
-const HEARTBEAT_TIMEOUT  = 25000;
+const HEARTBEAT_MS = 10000; // send a ping every 10s
+const DEAD_MS      = 32000; // if no ping for 32s, consider gone
 
 export default function Chat() {
   const navigate = useNavigate();
@@ -19,18 +18,33 @@ export default function Chat() {
   const password = sessionStorage.getItem('roomPassword') || '';
   const userId   = localStorage.getItem('userId') || 'anon';
 
-  const [messages, setMessages]     = useState<Msg[]>([]);
-  const [input, setInput]           = useState('');
-  const [key, setKey]               = useState<Uint8Array | null>(null);
-  const [members, setMembers]       = useState<string[]>([]);
-  const bottomRef  = useRef<HTMLDivElement>(null);
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  // Track last heartbeat time per user so we can detect silent disconnects
-  const heartbeats = useRef<Record<string, number>>({});
-  const deadTimer  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [input, setInput]       = useState('');
+  const [key, setKey]           = useState<Uint8Array | null>(null);
+  const [members, setMembers]   = useState<string[]>([]);
+
+  const bottomRef   = useRef<HTMLDivElement>(null);
+  const channelRef  = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const hbSendRef   = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hbCheckRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastSeenRef = useRef<Record<string, number>>({});
+  // Keep roomId/userId accessible inside event listeners without stale closure
+  const roomIdRef  = useRef(roomId);
+  const userIdRef  = useRef(userId);
 
   useEffect(() => { if (!roomId || !password) navigate('/'); }, []);
   useEffect(() => { if (password) deriveKeyFromPassword(password).then(setKey); }, [password]);
+
+  // ── sendBeacon helper — the ONLY reliable exit on iOS Safari ──
+  const beaconLeave = useCallback(() => {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/leave_room`;
+    const body = JSON.stringify({ p_room_id: roomIdRef.current, p_user_id: userIdRef.current });
+    // sendBeacon survives page kill / swipe-away on mobile
+    if (navigator.sendBeacon) {
+      const blob = new Blob([body], { type: 'application/json' });
+      navigator.sendBeacon(url, blob);
+    }
+  }, []);
 
   useEffect(() => {
     if (!key || !roomId) return;
@@ -54,85 +68,77 @@ export default function Chat() {
       }
     });
 
-    // ── HEARTBEAT ── each client broadcasts a ping every 8s
-    // Any client that stops pinging for 25s is considered disconnected
-    ch.on('broadcast', { event: 'heartbeat' }, ({ payload }) => {
-      if (payload.userId) heartbeats.current[payload.userId] = Date.now();
+    // ── HEARTBEAT receive — record when we last heard from each user ──
+    ch.on('broadcast', { event: 'hb' }, ({ payload }) => {
+      if (payload.u) lastSeenRef.current[payload.u] = Date.now();
     });
 
-    // ── PRESENCE ── used to show member names in real time
+    // ── PRESENCE — drives the member name display ──
     ch.on('presence', { event: 'sync' }, () => {
       const state = ch.presenceState<{ user: string }>();
       const names = Object.values(state).flat().map((p) => p.user);
       setMembers(names);
-      // Also update DB member list
-      supabase.from('rooms').update({ members: names, member_count: names.length }).eq('room_id', roomId);
+      supabase.from('rooms')
+        .update({ members: names, member_count: names.length })
+        .eq('room_id', roomId);
     });
 
-    ch.on('presence', { event: 'join' }, ({ key: k }) => {
-      if (k !== userId) sys(`${k} joined`);
-    });
+    ch.on('presence', { event: 'join' }, ({ key: k }) => { if (k !== userId) sys(`${k} joined`); });
+    ch.on('presence', { event: 'leave' }, ({ key: k }) => { sys(`${k} left`); });
 
-    ch.on('presence', { event: 'leave' }, ({ key: k }) => {
-      sys(`${k} left`);
-    });
+    ch.subscribe(async (status) => {
+      if (status !== 'SUBSCRIBED') return;
 
-    ch.subscribe(async (s) => {
-      if (s !== 'SUBSCRIBED') return;
-
-      // Track presence with our name
       await ch.track({ user: userId, at: Date.now() });
-
-      // Use the new join_room RPC to add us to the members array
       await supabase.rpc('join_room', { p_room_id: roomId, p_user_id: userId });
 
-      // Start sending heartbeats
-      heartbeats.current[userId] = Date.now();
-      const hbInterval = setInterval(() => {
-        ch.send({ type: 'broadcast', event: 'heartbeat', payload: { userId } });
-      }, HEARTBEAT_INTERVAL);
+      // Seed our own last-seen
+      lastSeenRef.current[userId] = Date.now();
 
-      // Check for dead clients every 10s
-      deadTimer.current = setInterval(async () => {
+      // ── HEARTBEAT send — broadcast our ping every 10s ──
+      hbSendRef.current = setInterval(() => {
+        lastSeenRef.current[userId] = Date.now();
+        ch.send({ type: 'broadcast', event: 'hb', payload: { u: userId } });
+      }, HEARTBEAT_MS);
+
+      // ── HEARTBEAT check — every 15s, evict users we haven't heard from ──
+      hbCheckRef.current = setInterval(async () => {
         const now = Date.now();
-        const dead = Object.entries(heartbeats.current)
-          .filter(([id, lastSeen]) => id !== userId && now - lastSeen > HEARTBEAT_TIMEOUT)
-          .map(([id]) => id);
-
-        // Untrack dead clients from presence
-        dead.forEach((id) => {
-          delete heartbeats.current[id];
-          sys(`${id} disconnected`);
-        });
-      }, 10000);
-
-      // Cleanup heartbeat interval on unmount
-      return () => {
-        clearInterval(hbInterval);
-        if (deadTimer.current) clearInterval(deadTimer.current);
-      };
+        for (const [uid, last] of Object.entries(lastSeenRef.current)) {
+          if (uid === userId) continue;
+          if (now - last > DEAD_MS) {
+            delete lastSeenRef.current[uid];
+            sys(`${uid} disconnected`);
+            // Force-remove from DB in case their beacon didn't fire
+            await supabase.rpc('leave_room', { p_room_id: roomId, p_user_id: uid });
+          }
+        }
+      }, 15000);
     });
 
-    const cleanup = async () => {
-      if (deadTimer.current) clearInterval(deadTimer.current);
+    // ── visibilitychange — fires when iOS Safari is swiped away ──
+    // Use sendBeacon because async fetch won't complete after the page is killed
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') beaconLeave();
+    };
+
+    // ── pagehide — fires on iOS when Safari kills the page entirely ──
+    const onPageHide = () => beaconLeave();
+
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pagehide', onPageHide);
+
+    const cleanupAll = async () => {
+      if (hbSendRef.current)  clearInterval(hbSendRef.current);
+      if (hbCheckRef.current) clearInterval(hbCheckRef.current);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pagehide', onPageHide);
       await supabase.rpc('leave_room', { p_room_id: roomId, p_user_id: userId });
       supabase.removeChannel(ch);
     };
 
-    // Handle iOS Safari swiping away — visibilitychange is more reliable than beforeunload on mobile
-    const handleVisibility = () => {
-      if (document.visibilityState === 'hidden') {
-        // Fire-and-forget leave on tab hide — catches iOS swipe-away
-        supabase.rpc('leave_room', { p_room_id: roomId, p_user_id: userId });
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibility);
-      cleanup();
-    };
-  }, [key, roomId, userId]);
+    return () => { cleanupAll(); };
+  }, [key, roomId, userId, beaconLeave]);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
@@ -146,9 +152,13 @@ export default function Chat() {
   }, [key, input, userId]);
 
   const leave = async () => {
-    if (deadTimer.current) clearInterval(deadTimer.current);
+    if (hbSendRef.current)  clearInterval(hbSendRef.current);
+    if (hbCheckRef.current) clearInterval(hbCheckRef.current);
     await supabase.rpc('leave_room', { p_room_id: roomId, p_user_id: userId });
-    if (channelRef.current) { await supabase.removeChannel(channelRef.current); channelRef.current = null; }
+    if (channelRef.current) {
+      await supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
     sessionStorage.removeItem('roomId');
     sessionStorage.removeItem('roomPassword');
     navigate('/lobby');
@@ -168,7 +178,9 @@ export default function Chat() {
                 {members.length > 0
                   ? members.map((m, i) => (
                       <span key={m}>
-                        <span style={{ color: m === userId ? 'var(--green)' : 'var(--text2)' }}>{m === userId ? `${m} (you)` : m}</span>
+                        <span style={{ color: m === userId ? 'var(--green)' : 'var(--text2)' }}>
+                          {m === userId ? `${m} (you)` : m}
+                        </span>
                         {i < members.length - 1 && <span style={{ color: 'var(--text3)' }}>, </span>}
                       </span>
                     ))
