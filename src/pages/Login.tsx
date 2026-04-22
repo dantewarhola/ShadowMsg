@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MatrixRain from '../components/MatrixRain';
+import { useTheme } from '../lib/theme';
 import Logo from '../components/LogoMark';
 
 export default function Login() {
   const [name, setName] = useState('');
   const navigate = useNavigate();
+  const { theme, toggle } = useTheme();
 
   const go = () => {
     const t = name.trim();
@@ -23,6 +25,7 @@ export default function Login() {
           CipherChat
         </div>
         <div className="nav-right">
+          <button className="theme-toggle" onClick={toggle}>{theme === 'dark' ? '☀' : '☾'}</button>
           <span className="nav-tag">E2EE · XSalsa20</span>
         </div>
       </nav>

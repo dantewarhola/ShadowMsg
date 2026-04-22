@@ -936,3 +936,366 @@ input::placeholder { color: var(--text3); }
   color: #fbbf24;
   border: 1px solid rgba(255,165,0,0.2);
 }
+
+/* ════════════════════════════════════
+   LIGHT MODE
+════════════════════════════════════ */
+[data-theme="light"] {
+  --bg:        #f4f4f5;
+  --bg2:       #ffffff;
+  --bg3:       #f1f5f9;
+  --bg4:       #e2e8f0;
+  --border:    rgba(0, 0, 0, 0.07);
+  --border2:   rgba(0, 0, 0, 0.12);
+  --border3:   rgba(0, 180, 50, 0.4);
+  --green:     #16a34a;
+  --green-d:   #15803d;
+  --green-dim: rgba(22, 163, 74, 0.08);
+  --green-glow:rgba(22, 163, 74, 0.2);
+  --text:      #1e293b;
+  --text2:     #64748b;
+  --text3:     #cbd5e1;
+  --danger:    #dc2626;
+  --success:   #16a34a;
+}
+
+[data-theme="light"] .msg.own .msg-bubble {
+  color: #fff;
+}
+
+[data-theme="light"] #matrix-canvas {
+  opacity: 0.04;
+}
+
+[data-theme="light"] .nav,
+[data-theme="light"] .chat-nav,
+[data-theme="light"] .chat-input-area {
+  background: rgba(255,255,255,0.85);
+}
+
+/* theme toggle button */
+.theme-toggle {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1;
+}
+.theme-toggle:hover { border-color: var(--green); }
+
+/* ════════════════════════════════════
+   REACTIONS
+════════════════════════════════════ */
+.msg-wrap {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.msg-wrap:hover .reaction-trigger { opacity: 1; }
+
+.reaction-trigger {
+  position: absolute;
+  top: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  line-height: 1.4;
+  white-space: nowrap;
+  z-index: 10;
+}
+.msg.own  .reaction-trigger { left: -36px; }
+.msg.other .reaction-trigger { right: -36px; }
+
+.reaction-picker {
+  position: absolute;
+  top: -40px;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 24px;
+  padding: 6px 10px;
+  display: flex;
+  gap: 6px;
+  z-index: 20;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  animation: fadeUp 0.15s ease both;
+}
+.msg.own  .reaction-picker { right: 0; }
+.msg.other .reaction-picker { left: 0; }
+
+.reaction-picker button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 6px;
+  transition: transform 0.1s, background 0.1s;
+  line-height: 1;
+}
+.reaction-picker button:hover {
+  transform: scale(1.3);
+  background: var(--bg3);
+}
+
+.msg-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.reaction-badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 2px 7px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.12s;
+  line-height: 1.4;
+}
+.reaction-badge:hover { border-color: var(--green); }
+.reaction-badge.mine { border-color: var(--green); background: var(--green-dim); }
+.reaction-badge .count {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text2);
+}
+
+/* copy button */
+.copy-btn {
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-size: 11px;
+  font-family: var(--mono);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  margin-top: 2px;
+}
+.msg-wrap:hover .copy-btn { opacity: 1; }
+.copy-btn:hover { background: var(--bg3); color: var(--green); }
+
+/* ════════════════════════════════════
+   ROOM SHARING LINK
+════════════════════════════════════ */
+.share-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 8px 12px;
+  margin-top: 12px;
+}
+
+.share-url {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-copy-link {
+  background: var(--green-dim);
+  border: 1px solid var(--border2);
+  color: var(--green);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-copy-link:hover { background: var(--green); color: #000; }
+.btn-copy-link.copied { background: var(--green); color: #000; }
+
+/* ════════════════════════════════════
+   PANIC BUTTON
+════════════════════════════════════ */
+.btn-panic {
+  background: transparent;
+  border: 1px solid rgba(255, 68, 68, 0.35);
+  color: var(--danger);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 7px 12px;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+}
+.btn-panic:hover {
+  background: var(--danger);
+  color: #fff;
+  box-shadow: 0 0 16px rgba(255,68,68,0.4);
+}
+
+/* panic confirm overlay */
+.panic-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeUp 0.15s ease both;
+}
+
+.panic-box {
+  background: var(--bg2);
+  border: 1px solid rgba(255,68,68,0.4);
+  border-radius: var(--rl);
+  padding: 32px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+}
+
+.panic-title {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--danger);
+  margin-bottom: 8px;
+  letter-spacing: 0.04em;
+}
+
+.panic-desc {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  margin-bottom: 24px;
+  line-height: 1.7;
+}
+
+.panic-actions { display: flex; gap: 10px; justify-content: center; }
+
+/* ════════════════════════════════════
+   SCREENSHOT WARNING
+════════════════════════════════════ */
+.screenshot-toast {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,68,68,0.12);
+  border: 1px solid rgba(255,68,68,0.35);
+  color: var(--danger);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  z-index: 150;
+  letter-spacing: 0.04em;
+  animation: toastIn 0.2s ease both;
+  white-space: nowrap;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ════════════════════════════════════
+   ROOM EXPIRY & LOCK — CREATE PAGE
+════════════════════════════════════ */
+.expiry-options {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.expiry-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 7px 12px;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.expiry-btn.active {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-dim);
+}
+
+/* room lock toggle in chat */
+.lock-btn {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 7px 10px;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.lock-btn.locked {
+  border-color: #fbbf24;
+  color: #fbbf24;
+  background: rgba(251,191,36,0.07);
+}
+.lock-btn:hover { border-color: var(--border3); color: var(--text); }
+
+/* locked room warning on join */
+.locked-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(251,191,36,0.07);
+  border: 1px solid rgba(251,191,36,0.25);
+  color: #fbbf24;
+  border-radius: var(--r);
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  margin-bottom: 14px;
+}
+
+/* force-remove member button */
+.btn-kick {
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: 3px;
+  transition: color 0.12s;
+  font-family: var(--mono);
+}
+.btn-kick:hover { color: var(--danger); }

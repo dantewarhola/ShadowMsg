@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { hashValue } from '../lib/crypto';
 import MatrixRain from '../components/MatrixRain';
 import Logo from '../components/LogoMark';
+import { useTheme } from '../lib/theme';
 
 export default function Join() {
   const { roomId: param } = useParams<{ roomId?: string }>();
@@ -13,6 +14,7 @@ export default function Join() {
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
   const navigate = useNavigate();
+  const { theme, toggle } = useTheme();
 
   useEffect(() => { if (!localStorage.getItem('userId')) navigate('/'); }, [navigate]);
 
@@ -21,8 +23,19 @@ export default function Join() {
     if (!room || !pass) return;
     setLoading(true); setError('');
     try {
-      const { data, error: err } = await supabase.from('rooms').select('room_id, password, capacity, member_count').eq('room_id', room).single();
+      const { data, error: err } = await supabase
+        .from('rooms')
+        .select('room_id, password, capacity, member_count, is_locked, expires_at')
+        .eq('room_id', room)
+        .single();
+
       if (err || !data) { setError('Room not found.'); setLoading(false); return; }
+      if (data.is_locked) { setError('Room is locked by the creator.'); setLoading(false); return; }
+      if (data.expires_at && new Date(data.expires_at) < new Date()) {
+        setError('This room has expired.');
+        setLoading(false);
+        return;
+      }
 
       const hashed = await hashValue(pass);
       if (data.password !== hashed) { setError('Incorrect password.'); setLoading(false); return; }
@@ -40,6 +53,7 @@ export default function Join() {
       <nav className="nav">
         <div className="nav-brand"><Logo size={22} />CipherChat</div>
         <div className="nav-right">
+          <button className="theme-toggle" onClick={toggle}>{theme === 'dark' ? '☀' : '☾'}</button>
           <button className="btn-ghost" onClick={() => navigate('/ask')}>← Back</button>
         </div>
       </nav>
@@ -58,10 +72,17 @@ export default function Join() {
 
           <div className="field">
             <label className="field-label">Password</label>
-            <input type="password" placeholder="Shared secret" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') handle(); }} autoFocus={!!roomId} />
+            <input type="password" placeholder="Shared secret" value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handle(); }}
+              autoFocus={!!roomId} />
           </div>
 
-          {error && <div className="error-msg">{error}</div>}
+          {error && (
+            <div className={error.includes('locked') ? 'locked-banner' : 'error-msg'}>
+              {error.includes('locked') ? '🔒 ' : ''}{error}
+            </div>
+          )}
 
           <button className="btn-primary" onClick={handle} disabled={!roomId.trim() || !password.trim() || loading}>
             {loading ? 'Checking…' : 'Join Room →'}
