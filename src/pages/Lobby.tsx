@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import MatrixRain from '../components/MatrixRain';
-import { useTheme } from '../lib/theme';
 import Logo from '../components/LogoMark';
 
 interface Room {
@@ -17,7 +16,6 @@ export default function Lobby() {
   const [rooms, setRooms]     = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { theme, toggle } = useTheme();
 
   const fetchRooms = async () => {
     setLoading(true);
@@ -44,7 +42,6 @@ export default function Lobby() {
       <nav className="nav">
         <div className="nav-brand"><Logo size={22} />CipherChat</div>
         <div className="nav-right">
-          <button className="theme-toggle" onClick={toggle}>{theme === 'dark' ? '☀' : '☾'}</button>
           <button className="btn-ghost" onClick={fetchRooms}>↻ Refresh</button>
           <button className="btn-new" onClick={() => navigate('/create')}>+ New Room</button>
         </div>

@@ -5,7 +5,6 @@ import { deriveKeyFromPassword, encryptMessage, decryptMessage } from '../lib/cr
 import { playMessageReceived, playMessageSent, playPanic } from '../lib/sounds';
 import MatrixRain from '../components/MatrixRain';
 import Logo from '../components/LogoMark';
-import { useTheme } from '../lib/theme';
 
 interface Msg {
   id: string;
@@ -28,7 +27,6 @@ export default function Chat() {
   const roomId    = sessionStorage.getItem('roomId') || '';
   const password  = sessionStorage.getItem('roomPassword') || '';
   const userId    = localStorage.getItem('userId') || 'anon';
-  const { theme, toggle } = useTheme();
 
   const [messages, setMessages]         = useState<Msg[]>([]);
   const [input, setInput]               = useState('');
@@ -137,7 +135,8 @@ export default function Chat() {
       }
       try {
         const text = decryptMessage(payload.cipher, payload.nonce, key);
-        setMessages(p => [...p, { id: crypto.randomUUID(), type: 'other', sender: payload.sender, text, time: ts(), reactions: {} }]);
+        const id = payload.msgId || crypto.randomUUID(); // use sender's ID so reactions can match
+        setMessages(p => [...p, { id, type: 'other', sender: payload.sender, text, time: ts(), reactions: {} }]);
         if (soundRef.current) playMessageReceived();
         if (isHidden.current) setUnreadCount(c => c + 1);
       } catch {
@@ -310,9 +309,10 @@ export default function Chat() {
     if (typingRef.current) clearTimeout(typingRef.current);
     channelRef.current.send({ type: 'broadcast', event: 'stop_typing', payload: { sender: userId } });
     const { nonce, cipher } = encryptMessage(text, key);
-    setMessages(p => [...p, { id: crypto.randomUUID(), type: 'own', sender: userId, text, time: ts(), reactions: {} }]);
+    const msgId = crypto.randomUUID(); // generate once, share with receiver
+    setMessages(p => [...p, { id: msgId, type: 'own', sender: userId, text, time: ts(), reactions: {} }]);
     if (soundRef.current) playMessageSent();
-    channelRef.current.send({ type: 'broadcast', event: 'msg', payload: { sender: userId, nonce, cipher } });
+    channelRef.current.send({ type: 'broadcast', event: 'msg', payload: { sender: userId, nonce, cipher, msgId } });
   }, [key, input, userId]);
 
   const toggleReaction = (msgId: string, emoji: string) => {
@@ -443,7 +443,6 @@ export default function Chat() {
                 expires {new Date(expiresAt).toLocaleDateString()}
               </span>
             )}
-            <button className="theme-toggle" onClick={toggle}>{theme === 'dark' ? '☀' : '☾'}</button>
             <button
               className="btn-ghost"
               style={{ fontSize: 11, padding: '6px 9px' }}

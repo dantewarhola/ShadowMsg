@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase';
 import { hashValue } from '../lib/crypto';
 import MatrixRain from '../components/MatrixRain';
 import Logo from '../components/LogoMark';
-import { useTheme } from '../lib/theme';
 
 const EXPIRY_OPTIONS = [
   { label: '1 hr',  ms: 60 * 60 * 1000 },
@@ -23,7 +22,6 @@ export default function Create() {
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState('');
   const navigate = useNavigate();
-  const { theme, toggle } = useTheme();
   const userId = localStorage.getItem('userId') || 'anon';
 
   const handle = async () => {
@@ -60,7 +58,6 @@ export default function Create() {
       <nav className="nav">
         <div className="nav-brand"><Logo size={22} />CipherChat</div>
         <div className="nav-right">
-          <button className="theme-toggle" onClick={toggle}>{theme === 'dark' ? '☀' : '☾'}</button>
           <button className="btn-ghost" onClick={() => navigate('/ask')}>← Back</button>
         </div>
       </nav>

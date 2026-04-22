@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase';
 import { hashValue } from '../lib/crypto';
 import MatrixRain from '../components/MatrixRain';
 import Logo from '../components/LogoMark';
-import { useTheme } from '../lib/theme';
 
 export default function Join() {
   const { roomId: param } = useParams<{ roomId?: string }>();
@@ -14,7 +13,6 @@ export default function Join() {
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
   const navigate = useNavigate();
-  const { theme, toggle } = useTheme();
 
   useEffect(() => { if (!localStorage.getItem('userId')) navigate('/'); }, [navigate]);
 
@@ -53,7 +51,6 @@ export default function Join() {
       <nav className="nav">
         <div className="nav-brand"><Logo size={22} />CipherChat</div>
         <div className="nav-right">
-          <button className="theme-toggle" onClick={toggle}>{theme === 'dark' ? '☀' : '☾'}</button>
           <button className="btn-ghost" onClick={() => navigate('/ask')}>← Back</button>
         </div>
       </nav>

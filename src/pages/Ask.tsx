@@ -1,11 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import MatrixRain from '../components/MatrixRain';
-import { useTheme } from '../lib/theme';
 import Logo from '../components/LogoMark';
 
 export default function Ask() {
   const navigate = useNavigate();
-  const { theme, toggle } = useTheme();
   const userId = localStorage.getItem('userId') || 'anon';
 
   return (
@@ -17,7 +15,6 @@ export default function Ask() {
           CipherChat
         </div>
         <div className="nav-right">
-          <button className="theme-toggle" onClick={toggle}>{theme === 'dark' ? '☀' : '☾'}</button>
           <span className="nav-tag">{userId}</span>
         </div>
       </nav>
