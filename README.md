@@ -1,12 +1,12 @@
-# CipherChat
+# PhantomChat
 
 **End-to-end encrypted, ephemeral messaging. No accounts. No logs. No traces.**
 
 ---
 
-## What is CipherChat?
+## What is PhantomChat?
 
-CipherChat is a browser-based secure messaging platform built for private, real-time conversations. Every message is encrypted on your device before it leaves. The server never sees your plaintext. When a room is gone, the messages are gone with it.
+PhantomChat is a browser-based secure messaging platform built for private, real-time conversations. Every message is encrypted on your device before it leaves. The server never sees your plaintext. When a room is gone, the messages are gone with it.
 
 ---
 
@@ -16,7 +16,7 @@ CipherChat is a browser-based secure messaging platform built for private, real-
 
 All messages are encrypted using **XSalsa20-Poly1305** (the same cipher used in Signal). Your room password is used locally to derive a 32-byte key via SHA-256. It is never transmitted to the server. Only ciphertext travels over the network.
 
-> 📸 *[Screenshot: the login screen showing the CipherChat logo, the "Welcome to CipherChat" heading, the display name input field, and the matrix rain animation falling in the background behind the form]*
+> 📸 *[Screenshot: the login screen showing the PhantomChat logo, the "Welcome to PhantomChat" heading, the display name input field, and the matrix rain animation falling in the background behind the form]*
 
 ---
 
@@ -114,7 +114,7 @@ A subtle tone plays when you receive a new message. A different softer tone play
 
 If you switch to another browser tab while in a chat, any incoming messages increment an unread counter shown in the browser tab title. The counter clears automatically when you return to the tab.
 
-> 📸 *[Screenshot: a browser window showing multiple open tabs at the top, with the CipherChat tab clearly displaying "(3) CipherChat" in the tab title text to show 3 unread messages have arrived while the user was away]*
+> 📸 *[Screenshot: a browser window showing multiple open tabs at the top, with the PhantomChat tab clearly displaying "(3) PhantomChat" in the tab title text to show 3 unread messages have arrived while the user was away]*
 
 ---
 
@@ -156,7 +156,7 @@ Rooms automatically delete from the database when the last person leaves. Expire
 
 The full interface is responsive and works on mobile browsers. Inputs are tuned to prevent iOS Safari from auto-zooming when tapped. Safe area padding accounts for notches and home indicators on modern iPhones.
 
-> 📸 *[Screenshot: the CipherChat login screen as seen on a mobile phone (portrait orientation), showing the complete page fitting correctly within the screen — the logo at the top, the display name input, and the Continue button all visible without any zooming, scrolling, or horizontal overflow]*
+> 📸 *[Screenshot: the PhantomChat login screen as seen on a mobile phone (portrait orientation), showing the complete page fitting correctly within the screen — the logo at the top, the display name input, and the Continue button all visible without any zooming, scrolling, or horizontal overflow]*
 
 ---
 
