@@ -1,176 +1,79 @@
+# SecureChat v2 — End-to-End Encrypted Messaging
 
-# 🔒 Secure Chat App
+A fully browser-side encrypted chat app. Messages are encrypted with **XSalsa20-Poly1305** (TweetNaCl) before leaving your device. The server never sees plaintext.
 
-A lightweight, end-to-end encrypted chat web application where users can create or join password-protected rooms and exchange encrypted messages in real time.
+## Tech Stack
 
-Built with **React**, **Node.js (Express)**, **Socket.IO**, and **custom encryption** for secure peer-to-peer communication.
+- **Frontend:** React 18 + TypeScript + Vite
+- **Backend/Realtime:** Supabase (Postgres + Realtime WebSockets)
+- **Encryption:** TweetNaCl (XSalsa20-Poly1305 + SHA-256 key derivation)
+- **Hosting:** Vercel
 
 ---
 
-# ✨ Live Demo
+## Deploy in 5 minutes
 
->
+### Step 1 — Supabase setup
+
+1. Go to [supabase.com](https://supabase.com) → **New Project**
+2. Open **SQL Editor** and paste the contents of `supabase-setup.sql` → Run
+3. Go to **Database → Replication** → enable Realtime for the `rooms` table
+4. Go to **Project Settings → API** → copy:
+   - `Project URL`
+   - `anon public` key
+
+### Step 2 — Environment variables
+
+Create a `.env` file (copy `.env.example`):
 
 ```
-https://encrypted-messaging.onrender.com
+VITE_SUPABASE_URL=https://xxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...
 ```
 
-## 🚀 Features
-
-- **User Authentication:** Simple username login
-- **Create Rooms:** Start a new chat room by providing a custom Room ID and password
-- **Join Rooms:** Join an existing room by entering the correct Room ID and password
-- **Password Protection:** Rooms require a password for access
-- **End-to-End Encryption:** Messages are encrypted in the browser before being sent over the network
-- **Real-Time Messaging:** Built with Socket.IO for instant updates
-- **Multiple Rooms Supported:** Can create and manage many active rooms at once
-- **LocalStorage/SessionStorage:** Automatically saves user info between page reloads
-- **Enter Key Navigation:** Pressing `Enter` triggers buttons like "Next" and "Send" for a smoother UX
-- **Responsive Design:** Clean, centered UI with dark crypto theme
-- **Deployed Publicly:** Can be hosted and shared with friends using free services like Render
-
----
-
-## 🛠 Technologies Used
-
-- **Frontend:** React + React Router
-- **Backend:** Express.js (Node.js)
-- **WebSockets:** Socket.IO
-- **Encryption:** Custom client-side encryption (AES-GCM based)
-- **Hosting:** Render.com (both frontend and backend)
-
----
-
-## ⚙️ Setup Instructions
-
-### 1. Clone the Project
+### Step 3 — Deploy to Vercel
 
 ```bash
-git clone https://github.com/your-username/secure-chat-app.git
-cd secure-chat-app
+# Option A: Via Vercel CLI
+npm i -g vercel
+vercel --prod
+
+# Option B: Via GitHub
+# 1. Push this folder to a GitHub repo
+# 2. Import at vercel.com/new
+# 3. Add the two env vars above in Vercel project settings
+# 4. Deploy
 ```
 
-### 2. Install Dependencies
+Vercel auto-detects Vite. The `vercel.json` handles SPA routing.
+
+---
+
+## Run locally
 
 ```bash
-# Install server dependencies
-cd server
 npm install
-
-# Install client dependencies
-cd ../client
-npm install
-```
-
-### 3. Run Locally
-
-Open two terminals:
-
-```bash
-# Terminal 1: Start backend server
-cd server
-node index.js
-
-# Terminal 2: Start frontend client
-cd client
-npm start
-```
-
-- Server runs at `http://localhost:4000`
-- Client runs at `http://localhost:3000`
-
----
-
-## 🌍 Deployment
-
-### Deploy Backend
-
-- Host the `/server` folder as a **Web Service** on [Render](https://render.com/)
-- Set the start command to:
-  ```bash
-  node index.js
-  ```
-
-### Deploy Frontend
-
-- Build the frontend:
-
-```bash
-cd client
-npm run build
-```
-
-- Host the `/client/build/` folder as a **Static Site** on Render
-- Set:
-  - Root Directory: `client`
-  - Build Command: `npm run build`
-  - Publish Directory: `build`
-
-✅ Update the `SERVER` URL in the client code to match your Render backend URL.
-
----
-
-## 🧩 Folder Structure
-
-```
-/server
-  index.js         (Express + Socket.IO backend)
-
-/client
-  /src
-    /pages         (React pages: Login, Ask, Lobby, Join, Create, Chat)
-    /socket.ts     (Socket.IO client connection)
-    /crypto.ts     (Custom encryption functions)
-    App.tsx        (Router setup)
-    styles.css     (Global styles)
-  package.json
+cp .env.example .env   # fill in your Supabase credentials
+npm run dev
 ```
 
 ---
 
-## 💬 How It Works
+## How the encryption works
 
-1. User logs in with a username
-2. User chooses to create a new room or join an existing one
-3. Room is protected by a password
-4. Password-derived key is used to encrypt all messages locally
-5. Messages are decrypted only in the receiver's browser
-6. No plaintext messages ever leave the user's device
-7. Pressing `Enter` submits forms (login, send message)
+1. The room password is **never sent to the server** — it stays in your browser session storage
+2. `SHA-256(password)` is used as a 32-byte symmetric key
+3. Every message is encrypted with `nacl.secretbox` (XSalsa20-Poly1305) before being broadcast
+4. Messages are sent via Supabase Realtime **broadcast channels** — they are never stored in the database
+5. The receiving browser decrypts locally using the same derived key
 
----
-
-## 📈 Future Enhancements (Ideas)
-
-- Add message timestamps
-- Show "User is typing..." indicator
-- Add room capacity selection (more than 2 users)
-- Add file/image sharing with encryption
-- Build a landing page and better error pages (like 404 handling)
-- Deploy backend + frontend together as a monorepo
+This means: even if Supabase were compromised, an attacker would only see random-looking ciphertext.
 
 ---
 
-## 🛡️ Security Notes
+## Limitations / Notes
 
-- Messages are encrypted end-to-end between clients
-- Passwords are never sent to the server directly
-- Room encryption keys are derived using browser-side crypto
-- This app is for **learning and educational use** — for production-grade secure messaging, further cryptographic auditing would be needed.
-
----
-
-# 🧑‍💻 Author
-
-**Dante Warhola**  
-University of Pittsburgh — Computer Science  
-Pi Kappa Phi Risk Manager | Cybersecurity Enthusiast  
-[LinkedIn](https://www.linkedin.com/in/dante-warhola/) | [GitHub](https://github.com/dantewarhola)
-
----
-
-# 📜 License
-
-This project is open-source and free to use for educational and personal purposes.
-
----
+- Max 2 users per room (configurable in DB)
+- Messages are ephemeral — they disappear when you leave (no history stored)
+- Room passwords are stored as plaintext in Supabase (fine for demo; hash them for production)
+- Member count resets on page refresh due to browser nature — this is cosmetic only
