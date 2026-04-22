@@ -107,12 +107,19 @@ export default function Chat() {
     channel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
         await channel.track({ user: userId, online_at: new Date().toISOString() });
-        // Increment member count in DB
         await supabase.rpc('increment_member_count', { p_room_id: roomId });
       }
     });
 
+    // Also decrement when tab/browser is closed
+    const handleUnload = () => {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/decrement_member_count`;
+      navigator.sendBeacon(url, new Blob([JSON.stringify({ p_room_id: roomId })], { type: 'application/json' }));
+    };
+    window.addEventListener('beforeunload', handleUnload);
+
     return () => {
+      window.removeEventListener('beforeunload', handleUnload);
       supabase.rpc('decrement_member_count', { p_room_id: roomId });
       supabase.removeChannel(channel);
     };
@@ -148,8 +155,10 @@ export default function Chat() {
   }, [key, input, userId]);
 
   const handleLeave = async () => {
+    await supabase.rpc('decrement_member_count', { p_room_id: roomId });
     if (channelRef.current) {
       await supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
     }
     sessionStorage.removeItem('roomId');
     sessionStorage.removeItem('roomPassword');

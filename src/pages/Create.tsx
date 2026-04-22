@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 export default function Create() {
   const [roomId, setRoomId] = useState('');
   const [password, setPassword] = useState('');
+  const [capacity, setCapacity] = useState(2);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function Create() {
       // Create room
       const { error: insertError } = await supabase
         .from('rooms')
-        .insert([{ room_id: trimmedRoom, password: trimmedPass, capacity: 2 }]);
+        .insert([{ room_id: trimmedRoom, password: trimmedPass, capacity }]);
 
       if (insertError) {
         setError('Failed to create room: ' + insertError.message);
@@ -82,6 +83,31 @@ export default function Create() {
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); }}
           />
+        </div>
+
+        <div className="field">
+          <label>Max Users</label>
+          <select
+            value={capacity}
+            onChange={(e) => setCapacity(Number(e.target.value))}
+            style={{
+              width: '100%',
+              background: 'var(--surface2)',
+              border: '1px solid var(--border)',
+              borderRadius: 8,
+              color: 'var(--text)',
+              fontSize: 15,
+              fontFamily: 'var(--mono)',
+              padding: '12px 14px',
+              outline: 'none',
+              marginBottom: 16,
+              cursor: 'pointer',
+            }}
+          >
+            {[2,3,4,5,6,8,10].map(n => (
+              <option key={n} value={n}>{n} users</option>
+            ))}
+          </select>
         </div>
 
         {error && <div className="error-msg">{error}</div>}
