@@ -6,7 +6,7 @@
 
 ## What is CipherChat?
 
-CipherChat is a browser-based secure messaging platform built for private, real-time conversations. Every message is encrypted on your device before it leaves — the server never sees your plaintext. When a room is gone, the messages are gone with it.
+CipherChat is a browser-based secure messaging platform built for private, real-time conversations. Every message is encrypted on your device before it leaves. The server never sees your plaintext. When a room is gone, the messages are gone with it.
 
 ---
 
@@ -14,7 +14,7 @@ CipherChat is a browser-based secure messaging platform built for private, real-
 
 ### Encrypted Messaging
 
-All messages are encrypted using **XSalsa20-Poly1305** (the same cipher used in Signal). Your room password is used locally to derive a 32-byte key via SHA-256 — it is never transmitted to the server. Only ciphertext travels over the network.
+All messages are encrypted using **XSalsa20-Poly1305** (the same cipher used in Signal). Your room password is used locally to derive a 32-byte key via SHA-256. It is never transmitted to the server. Only ciphertext travels over the network.
 
 > 📸 *[Screenshot: the login screen showing the CipherChat logo, the "Welcome to CipherChat" heading, the display name input field, and the matrix rain animation falling in the background behind the form]*
 
@@ -24,11 +24,11 @@ All messages are encrypted using **XSalsa20-Poly1305** (the same cipher used in 
 
 When you create a room you configure:
 
-- **Room ID** — a unique name for your channel
-- **Password** — shared with anyone you invite. Hashed with SHA-256 before being stored in the database, so even the server never knows your real password
-- **Max Users** — from 2 up to 10
-- **Expiry** — rooms can auto-delete after 1 hour, 6 hours, 24 hours, 7 days, or never
-- **Visibility** — Public rooms appear in the lobby. Private rooms are invisible and can only be joined with the exact room ID
+- **Room ID** - a unique name for your channel
+- **Password** - shared with anyone you invite. Hashed with SHA-256 before being stored in the database, so even the server never knows your real password
+- **Max Users** - from 2 up to 10
+- **Expiry** - rooms can auto-delete after 1 hour, 6 hours, 24 hours, 7 days, or never
+- **Visibility** - Public rooms appear in the lobby. Private rooms are invisible and can only be joined with the exact room ID
 
 > 📸 *[Screenshot: the Create a Room page showing all five configuration fields — the Room ID text input, Password input, Max Users dropdown, the expiry time selector with all five buttons (1hr, 6hrs, 24hrs, 7 days, Never) where one is highlighted green, and the Public/Private visibility toggle showing both option cards with icons]*
 
@@ -36,7 +36,7 @@ When you create a room you configure:
 
 ### Room Sharing Link
 
-Every room has a direct join link automatically generated. Copy it with one click and send it to your contact — they land straight on the join page with the room ID pre-filled.
+Every room has a direct join link automatically generated. Copy it with one click and send it to your contact, they land straight on the join page with the room ID pre-filled.
 
 > 📸 *[Screenshot: the share link bar at the bottom of the Create Room page or inside the empty chat state, showing the full join URL like "https://yourchat.vercel.app/join/roomname" with a green Copy button on the right side]*
 
@@ -68,7 +68,7 @@ When another user is typing, three animated green dots appear at the bottom of t
 
 ### Message Reactions
 
-Hover any message and tap the **＋** button to open the reaction picker. Choose from 👍 ❤️ 😂 😮 👀 🔒. Each user can only have one reaction per message — picking a new one replaces your previous. Reactions sync to everyone in the room instantly. Tap your own reaction to remove it.
+Hover any message and tap the **＋** button to open the reaction picker. Choose from 👍 ❤️ 😂 😮 👀 🔒. Each user can only have one reaction per message, picking a new one replaces your previous. Reactions sync to everyone in the room instantly. Tap your own reaction to remove it.
 
 > 📸 *[Screenshot: a chat message being hovered with the small "＋" button visible to the side, and the reaction picker floating above the message showing all six emoji options in a horizontal pill-shaped popup, with one emoji slightly enlarged as if being hovered]*
 
@@ -94,7 +94,7 @@ The chat header shows the names of every connected user in real time. Your own n
 
 ### Room Lock
 
-The room creator can lock the room at any time using the 🔓 button in the nav bar. Once locked, no new users can join even if they have the password — they see a yellow warning on the join page. The creator can unlock it at any time. All currently connected users stay in the room.
+The room creator can lock the room at any time using the 🔓 button in the nav bar. Once locked, no new users can join even if they have the password They see a yellow warning on the join page. The creator can unlock it at any time. All currently connected users stay in the room.
 
 > 📸 *[Screenshot: the chat navigation bar with the lock button in its locked state showing a 🔒 icon highlighted in amber/yellow, and the room name also showing a small lock icon next to it indicating the room is currently locked]*
 
@@ -104,7 +104,7 @@ The room creator can lock the room at any time using the 🔓 button in the nav 
 
 ### Notification Sounds
 
-A subtle tone plays when you receive a new message. A different softer tone plays when you send one. Mute or unmute using the 🔊 button in the chat nav — your preference is saved for the session.
+A subtle tone plays when you receive a new message. A different softer tone plays when you send one. Mute or unmute using the 🔊 button in the chat nav. Your preference is saved for the session.
 
 > 📸 *[Screenshot: the chat navigation bar highlighting the sound toggle button showing the 🔊 speaker icon, positioned between the other nav controls on the right side]*
 
@@ -179,11 +179,11 @@ The full interface is responsive and works on mobile browsers. Inputs are tuned 
 
 ## Tech Stack
 
-- **Frontend** — React 18 + TypeScript + Vite
-- **Realtime** — Supabase Realtime (WebSocket broadcast + presence)
-- **Database** — Supabase Postgres
-- **Encryption** — TweetNaCl (XSalsa20-Poly1305)
-- **Hosting** — Vercel
+- **Frontend** - React 18 + TypeScript + Vite
+- **Realtime** - Supabase Realtime (WebSocket broadcast + presence)
+- **Database** - Supabase Postgres
+- **Encryption** - TweetNaCl (XSalsa20-Poly1305)
+- **Hosting** - Vercel
 
 ---
 
