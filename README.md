@@ -110,7 +110,7 @@ A subtle tone plays when you receive a new message. A different softer tone play
 
 If you switch to another browser tab while in a chat, any incoming messages increment an unread counter shown in the browser tab title. The counter clears automatically when you return to the tab.
 
-![Browser window showing multiple open tabs at the top, with the ShadowMsg tab clearly displaying "(3) ShadowMsg" in the tab title text to show 3 unread messages have arrived while the user was away](Assets/Notif_Imnage.png)
+![Browser window showing multiple open tabs at the top, with the ShadowMsg tab clearly displaying "(3) ShadowMsg" in the tab title text to show 3 unread messages have arrived while the user was away](Assets/Notif_Image.png)
 
 ---
 
