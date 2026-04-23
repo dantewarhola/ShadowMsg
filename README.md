@@ -16,7 +16,7 @@ ShadowMsg is a browser-based secure messaging platform built for private, real-t
 
 All messages are encrypted using **XSalsa20-Poly1305** (the same cipher used in Signal). Your room password is used locally to derive a 32-byte key via SHA-256. It is never transmitted to the server. Only ciphertext travels over the network.
 
-[Login screen showing the ShadowMsg logo, the "Welcome to ShadowMsg" heading, the display name input field, and the matrix rain animation falling in the background behind the form] (Assets/Login_Screen.png)
+![Login screen showing the ShadowMsg logo, the "Welcome to ShadowMsg" heading, the display name input field, and the matrix rain animation falling in the background behind the form](Assets/Login_Screen.png)
 
 ---
 
