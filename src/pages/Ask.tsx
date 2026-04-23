@@ -12,7 +12,7 @@ export default function Ask() {
       <nav className="nav">
         <div className="nav-brand">
           <Logo size={22} />
-          PhantomChat
+          ShadowMsg
         </div>
         <div className="nav-right">
           <span className="nav-tag">{userId}</span>
